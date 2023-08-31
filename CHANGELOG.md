@@ -1,3 +1,14 @@
+## [4.1.1](https://github.com/reedsy/vuex/compare/v4.1.0...v4.1.1) (2023-08-31)
+
+
+### Bug Fixes
+
+* dynamically merge the alive effects to new scope ([3515d3b](https://github.com/reedsy/vuex/commit/3515d3b3623807f100e7436cace9a0e521e5d310))
+* keep computed getter be reactive after registering new module ([619ef97](https://github.com/reedsy/vuex/commit/619ef975f4c73cdf7bf32d99d13c5d9d00725f31))
+* Remove stale reactive effect from modules after unregistering the module ([2095b01](https://github.com/reedsy/vuex/commit/2095b01e5f6667471187795fd2f733df0e0e758d))
+
+
+
 # [4.1.0](https://github.com/vuejs/vuex/compare/v4.0.2...v4.1.0) (2022-10-14)
 
 ### Vue Core Version Requirement Change
