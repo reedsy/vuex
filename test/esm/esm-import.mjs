@@ -12,11 +12,11 @@ import Vuex, {
   mapActions,
   createNamespacedHelpers,
   createLogger
-} from 'vuex'
+} from '@reedsy/vuex'
 
 const require = createRequire(import.meta.url)
 
-const cjs = require('vuex')
+const cjs = require('@reedsy/vuex')
 
 assert.equal(Vuex, cjs)
 assert.equal(Store, cjs.Store)
