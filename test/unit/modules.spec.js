@@ -952,4 +952,32 @@ describe('Modules', () => {
     store.commit('incrementFoo')
     expect(computedFoo.value).toBe(2)
   })
+
+  it('module: computed getter should be reactive after module unregistration', () => {
+    const store = new Vuex.Store({
+      state: {
+        foo: 0
+      },
+      getters: {
+        getFoo: state => state.foo
+      },
+      mutations: {
+        incrementFoo: state => state.foo++
+      }
+    })
+
+    const computedFoo = computed(() => store.getters.getFoo)
+    store.commit('incrementFoo')
+    expect(computedFoo.value).toBe(1)
+
+    store.registerModule('bar', {
+      state: {
+        bar: 0
+      }
+    })
+    store.unregisterModule('bar')
+
+    store.commit('incrementFoo')
+    expect(computedFoo.value).toBe(2)
+  })
 })
