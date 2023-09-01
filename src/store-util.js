@@ -1,5 +1,5 @@
 import { reactive, computed, watch, effectScope } from 'vue'
-import { forEachValue, isObject, isPromise, assert, partial } from './util'
+import { isObject, isPromise, assert, partial } from './util'
 
 export function genericSubscribe (fn, subs, options) {
   if (subs.indexOf(fn) < 0) {
@@ -30,47 +30,23 @@ export function resetStore (store, hot) {
 export function resetStoreState (store, state, hot) {
   const oldState = store._state
   const oldScope = store._scope
-  const oldCache = store._computedCache
-  const oldGettersKeySet = new Set(store.getters ? Object.keys(store.getters) : [])
 
   // bind store public getters
   store.getters = {}
   // reset local getters cache
   store._makeLocalGettersCache = Object.create(null)
-  const wrappedGetters = store._wrappedGetters
-  const computedObj = {}
-  const computedCache = {}
 
   // create a new effect scope and create computed object inside it to avoid
   // getters (computed) getting destroyed on component unmount.
   const scope = effectScope(true)
-
-  scope.run(() => {
-    forEachValue(wrappedGetters, (fn, key) => {
-      // Filter stale getters' key by comparing oldGetters and wrappedGetters,
-      // the key does not be removed from oldGettersKeySet are the key of stale computed cache.
-      // Stale computed cache: the computed cache should be removed as the corresponding module is removed.
-      oldGettersKeySet.delete(key)
-      // use computed to leverage its lazy-caching mechanism
-      // direct inline function use will lead to closure preserving oldState.
-      // using partial to return function with only arguments preserved in closure environment.
-      computedObj[key] = partial(fn, store)
-      computedCache[key] = computed(() => computedObj[key]())
-      Object.defineProperty(store.getters, key, {
-        get: () => computedCache[key].value,
-        enumerable: true // for local getters
-      })
-    })
-  })
+  // register the newly created effect scope to the store so that we can
+  // dispose the effects when this method runs again in the future.
+  store._scope = scope
+  registerGetters(store, Object.keys(store._wrappedGetters))
 
   store._state = reactive({
     data: state
   })
-
-  // register the newly created effect scope to the store so that we can
-  // dispose the effects when this method runs again in the future.
-  store._scope = scope
-  store._computedCache = computedCache
 
   // enable strict mode for new state
   if (store.strict) {
@@ -89,26 +65,28 @@ export function resetStoreState (store, state, hot) {
 
   // dispose previously registered effect scope if there is one.
   if (oldScope) {
-    const deadEffects = []
-    const staleComputedCache = new Set()
-    oldGettersKeySet.forEach((staleKey) => {
-      staleComputedCache.add(oldCache[staleKey])
-    })
-    oldScope.effects.forEach(effect => {
-      // Use the staleComputedCache match the computed property of reactiveEffect,
-      // to specify the stale cache
-      if (effect.deps.length && !staleComputedCache.has(effect.computed)) {
-        // Merge the effect that already have dependencies and prevent from being killed.
-        scope.effects.push(effect)
-      } else {
-        // Collect the dead effects.
-        deadEffects.push(effect)
-      }
-    })
-    // Dispose the dead effects.
-    oldScope.effects = deadEffects
     oldScope.stop()
   }
+}
+
+export function registerGetters (store, getterKeys) {
+  const computedObj = {}
+  const computedCache = {}
+
+  store._scope.run(() => {
+    getterKeys.forEach((key) => {
+      const fn = store._wrappedGetters[key]
+      // use computed to leverage its lazy-caching mechanism
+      // direct inline function use will lead to closure preserving oldState.
+      // using partial to return function with only arguments preserved in closure environment.
+      computedObj[key] = partial(fn, store)
+      computedCache[key] = computed(() => computedObj[key]())
+      Object.defineProperty(store.getters, key, {
+        get: () => computedCache[key].value,
+        enumerable: true // for local getters
+      })
+    })
+  })
 }
 
 export function installModule (store, rootState, path, module, hot) {
