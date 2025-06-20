@@ -1,13 +1,14 @@
 {
   "name": "@reedsy/vuex",
-  "version": "4.1.4",
+  "version": "4.1.5",
   "description": "state management for Vue.js",
   "main": "dist/vuex.cjs.js",
   "exports": {
     ".": {
       "module": "./dist/vuex.esm-bundler.js",
       "require": "./dist/vuex.cjs.js",
-      "import": "./dist/vuex.mjs"
+      "import": "./dist/vuex.mjs",
+      "types": "./types/index.d.ts"
     },
     "./*": "./*",
     "./": "./"
@@ -91,7 +92,7 @@
     "todomvc-app-css": "^2.4.1",
     "typescript": "^4.8.4",
     "vitepress": "^0.20.0",
-    "vue": "^3.2.41",
+    "vue": "=3.2.41",
     "vue-loader": "^17.0.0",
     "vue-style-loader": "^4.1.3",
     "webpack": "^4.43.0",
