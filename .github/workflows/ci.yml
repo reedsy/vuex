@@ -13,13 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
       with:
-        node-version: '16.x'
+        node-version-file: '.nvmrc'
         registry-url: 'https://npm.pkg.github.com'
     - name: Install
-      run: npm install
+      # Skip post-install to avoid malicious scripts stealing PAT
+      run: npm ci --ignore-scripts --min-release-age=0
+      env:
+        # GITHUB_TOKEN can't access packages hosted in private repos,
+        # even within the same organisation
+        NODE_AUTH_TOKEN: ${{ secrets.REEDSY_BOT_PERSONAL_ACCESS_TOKEN }}
+    - name: Post-install
+      run: npm rebuild && npm run prepare --if-present
     - name: Lint
       run: npm run lint
     - name: Test
